@@ -1,0 +1,11 @@
+# 核心依賴
+yfinance>=0.2.38
+pandas>=2.0.0
+requests>=2.31.0
+
+# AI 判斷（用 Claude Max 訂閱額度，免費）
+claude-agent-sdk>=0.2.0
+
+# 券商整合（選擇性，要實際下單時才需要）
+# shioaji>=1.2.0       # 台股 - 永豐金
+# alpaca-py>=0.30.0    # 美股 - Alpaca

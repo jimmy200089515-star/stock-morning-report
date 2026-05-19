@@ -1,0 +1,93 @@
+{
+  "cash": 4507.21872665167,
+  "positions": {
+    "3406": {
+      "code": "3406",
+      "name": "玉晶光",
+      "direction": "long",
+      "entry_price": 588.0,
+      "shares": 64,
+      "entry_date": "2026-05-17",
+      "leverage": 1.0,
+      "margin_locked": 37685.63,
+      "borrow_cost": 0.0,
+      "entry_score": 17
+    },
+    "6834": {
+      "code": "6834",
+      "name": "天二",
+      "direction": "long",
+      "entry_price": 50.2,
+      "shares": 613,
+      "entry_date": "2026-05-17",
+      "leverage": 1.0,
+      "margin_locked": 30816.45,
+      "borrow_cost": 0.0,
+      "entry_score": 17
+    },
+    "8147": {
+      "code": "8147",
+      "name": "正凌",
+      "direction": "long",
+      "entry_price": 189.0,
+      "shares": 132,
+      "entry_date": "2026-05-17",
+      "leverage": 1.0,
+      "margin_locked": 24983.55,
+      "borrow_cost": 0.0,
+      "entry_score": 14
+    },
+    "3209": {
+      "code": "3209",
+      "name": "全科",
+      "direction": "long",
+      "entry_price": 68.0,
+      "shares": 297,
+      "entry_date": "2026-05-17",
+      "leverage": 1.0,
+      "margin_locked": 20224.78,
+      "borrow_cost": 0.0,
+      "entry_score": 12
+    },
+    "2376": {
+      "code": "2376",
+      "name": "技嘉",
+      "direction": "long",
+      "entry_price": 349.0,
+      "shares": 234,
+      "entry_date": "2026-05-18",
+      "leverage": 1.0,
+      "margin_locked": 81782.37,
+      "borrow_cost": 0.0,
+      "entry_score": 9
+    }
+  },
+  "trade_log": [],
+  "equity_history": [
+    {
+      "date": "2026-05-17",
+      "equity": 199336,
+      "cash": 86290,
+      "n_positions": 4
+    },
+    {
+      "date": "2026-05-18",
+      "equity": 199299,
+      "cash": 4507,
+      "n_positions": 5
+    },
+    {
+      "date": "2026-05-18",
+      "equity": 197433,
+      "cash": 4507,
+      "n_positions": 5
+    },
+    {
+      "date": "2026-05-19",
+      "equity": 197137,
+      "cash": 4507,
+      "n_positions": 5
+    }
+  ],
+  "started_at": "2026-05-17"
+}
