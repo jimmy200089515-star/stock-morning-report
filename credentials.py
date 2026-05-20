@@ -25,5 +25,11 @@ ALPACA_PAPER = True
 # =============================================================
 # Telegram 推播 ✅ 已啟用
 # =============================================================
-TELEGRAM_BOT_TOKEN = "8700330723:AAE37Zl8Ugh_4Shg8nxZDk9Krtox8CXy8Y4"
-TELEGRAM_CHAT_ID = "1131459205"
+def _get_telegram_creds():
+    try:
+        from secrets_local import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+        return TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+    except ImportError:
+        return "", ""
+
+TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID = _get_telegram_creds()

@@ -4,3 +4,4 @@ __pycache__/
 intraday_alert_state.json
 backtest_result.json
 optimizer_result.json
+secrets_local.py

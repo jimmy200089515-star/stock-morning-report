@@ -192,9 +192,16 @@ RECOMMENDATION = {
 # ---------------------------------------------------------------------------
 # Gmail 寄送設定
 # ---------------------------------------------------------------------------
+def _get_email_password():
+    try:
+        from secrets_local import GMAIL_PASSWORD
+        return GMAIL_PASSWORD
+    except ImportError:
+        return ""
+
 EMAIL = {
     "sender": "sales@gee-coffee.com",
-    "password": "stmk brcw llam zakn",
+    "password": _get_email_password(),
     "to": ["sales@gee-coffee.com"],
     "subject": "台股早報",
 }
