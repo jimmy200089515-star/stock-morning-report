@@ -83,13 +83,14 @@ def _collect_data() -> dict:
     holdings = analyze_holdings()
     print(f"      → TW {len(holdings['tw'])} 檔 / US {len(holdings['us'])} 檔")
 
-    print("[4/8] 全市場掃描台股 → 推薦 ...")
-    rec_tw = scan_and_recommend_tw()
-    print(f"      → 推薦 {len(rec_tw.get('picks', []))} 檔")
-
-    print("[5/8] 掃描美股宇宙 → 推薦 ...")
-    rec_us = scan_and_recommend_us()
-    print(f"      → 推薦 {len(rec_us.get('picks', []))} 檔")
+    print("[4+5/8] 全市場掃描台股 + 美股宇宙（同時進行）...")
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=2) as exe:
+        fut_tw = exe.submit(scan_and_recommend_tw)
+        fut_us = exe.submit(scan_and_recommend_us)
+        rec_tw = fut_tw.result()
+        rec_us = fut_us.result()
+    print(f"      → 台股推薦 {len(rec_tw.get('picks', []))} 檔 / 美股推薦 {len(rec_us.get('picks', []))} 檔")
 
     print("[6/8] 紙上交易機器人結算 ...")
     paper_result = None
@@ -224,13 +225,14 @@ def full_mode() -> int:
     holdings = analyze_holdings()
     print(f"      → TW {len(holdings['tw'])} 檔 / US {len(holdings['us'])} 檔")
 
-    print("[4/7] 全市場掃描台股 → 推薦 ...")
-    rec_tw = scan_and_recommend_tw()
-    print(f"      → 推薦 {len(rec_tw.get('picks', []))} 檔")
-
-    print("[5/7] 掃描美股宇宙 → 推薦 ...")
-    rec_us = scan_and_recommend_us()
-    print(f"      → 推薦 {len(rec_us.get('picks', []))} 檔")
+    print("[4+5/7] 全市場掃描台股 + 美股宇宙（同時進行）...")
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=2) as exe:
+        fut_tw = exe.submit(scan_and_recommend_tw)
+        fut_us = exe.submit(scan_and_recommend_us)
+        rec_tw = fut_tw.result()
+        rec_us = fut_us.result()
+    print(f"      → 台股推薦 {len(rec_tw.get('picks', []))} 檔 / 美股推薦 {len(rec_us.get('picks', []))} 檔")
 
     print("[6/8] 紙上交易機器人結算 ...")
     paper_result = None

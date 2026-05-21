@@ -13,6 +13,7 @@
 
 import logging
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 
 import requests
@@ -578,44 +579,61 @@ def deep_kline_analysis(code_or_ticker: str, market: str = "TW") -> dict | None:
 # 持股每日分析
 # ===========================================================================
 def analyze_holdings(enable_vision: bool = True) -> dict:
-    """對所有持股做完整 K 線分析（含基本面、籌碼、AI 看圖）。"""
-    result = {"tw": [], "us": []}
+    """對所有持股做完整 K 線分析（含基本面、籌碼、AI 看圖）。平行抓取加速。"""
 
-    def _add_vision(entry):
-        if enable_vision and chart_vision_for is not None:
-            try:
-                v = chart_vision_for(entry["code"], entry["name"], entry["market"])
-                entry["chart_vision"] = v
-            except Exception as e:
-                print(f"    [Vision 失敗] {e}")
-                entry["chart_vision"] = None
-        return entry
-
-    for code, name in HOLDINGS_TW:
-        print(f"  [持股-TW] {code} {name}")
+    def _fetch_tw(code, name):
         entry = {
             "code": code, "name": name, "market": "TW",
             "kline": deep_kline_analysis(code, market="TW"),
             "fund": fetch_fundamentals(code),
             "inst": fetch_institutional(code),
             "margin": fetch_margin(code),
+            "chart_vision": None,
         }
-        _add_vision(entry)
-        result["tw"].append(entry)
-        time.sleep(0.3)
+        if enable_vision and chart_vision_for is not None:
+            try:
+                entry["chart_vision"] = chart_vision_for(code, name, "TW")
+            except Exception as e:
+                print(f"    [Vision 失敗] {e}")
+        print(f"  [持股-TW] {code} {name} done")
+        return entry
 
-    for ticker, name in HOLDINGS_US:
-        print(f"  [持股-US] {ticker} {name}")
+    def _fetch_us(ticker, name):
         entry = {
             "code": ticker, "name": name, "market": "US",
             "kline": deep_kline_analysis(ticker, market="US"),
             "fund": fetch_fundamentals(ticker),
+            "chart_vision": None,
         }
-        _add_vision(entry)
-        result["us"].append(entry)
-        time.sleep(0.3)
+        if enable_vision and chart_vision_for is not None:
+            try:
+                entry["chart_vision"] = chart_vision_for(ticker, name, "US")
+            except Exception as e:
+                print(f"    [Vision] {e}")
+        print(f"  [持股-US] {ticker} {name} done")
+        return entry
 
-    return result
+    tw_results: dict = {}
+    us_results: dict = {}
+
+    with ThreadPoolExecutor(max_workers=8) as exe:
+        tw_futs = {exe.submit(_fetch_tw, c, n): c for c, n in HOLDINGS_TW}
+        us_futs = {exe.submit(_fetch_us, t, n): t for t, n in HOLDINGS_US}
+        for f in as_completed({**tw_futs, **us_futs}):
+            key = tw_futs.get(f) or us_futs.get(f)
+            try:
+                res = f.result()
+                if res["market"] == "TW":
+                    tw_results[key] = res
+                else:
+                    us_results[key] = res
+            except Exception as e:
+                print(f"  [持股] {key} 失敗：{e}")
+
+    return {
+        "tw": [tw_results[c] for c, _ in HOLDINGS_TW if c in tw_results],
+        "us": [us_results[t] for t, _ in HOLDINGS_US if t in us_results],
+    }
 
 
 # ===========================================================================
@@ -758,27 +776,38 @@ def scan_and_recommend_tw() -> dict:
     candidates = _pre_filter_tw(all_stocks)
     print(f"  [TW Scan] 全市場 {len(all_stocks)} 檔 → 候選 {len(candidates)} 檔")
 
-    scored = []
     holdings_codes = {c for c, _ in HOLDINGS_TW}
+    candidates = [c for c in candidates if c["code"] not in holdings_codes]
 
-    for i, c in enumerate(candidates):
+    def _analyze_tw(c):
         code = c["code"]
-        if code in holdings_codes:
-            continue  # 持股已單獨分析，跳過
-        print(f"  [TW Scan {i+1}/{len(candidates)}] 深度分析 {code} {c['name']}")
         kline = deep_kline_analysis(code, market="TW")
-        fund = fetch_fundamentals(code)
         if kline is None:
-            continue
+            return None
+        fund = fetch_fundamentals(code)
         score, tags = _score_for_recommendation(kline, fund)
-        scored.append({
+        return {
             "code": code, "name": c["name"], "market": "TW",
             "kline": kline, "fund": fund,
             "score": score, "tags": tags,
             "inst": fetch_institutional(code),
             "margin": fetch_margin(code),
-        })
-        time.sleep(0.3)
+        }
+
+    scored = []
+    with ThreadPoolExecutor(max_workers=10) as exe:
+        futs = {exe.submit(_analyze_tw, c): c for c in candidates}
+        done = 0
+        for f in as_completed(futs):
+            done += 1
+            if done % 20 == 0:
+                print(f"  [TW Scan] {done}/{len(candidates)} ...")
+            try:
+                res = f.result()
+                if res:
+                    scored.append(res)
+            except Exception:
+                pass
 
     scored.sort(key=lambda x: -x["score"])
     top_n = RECOMMENDATION["top_n_recommend_tw"]
@@ -799,20 +828,32 @@ def scan_and_recommend_us() -> dict:
     universe = [t for t in universe if t not in holdings_set]
     print(f"  [US Scan] 宇宙 {len(universe)} 檔")
 
-    scored = []
-    for i, ticker in enumerate(universe):
-        print(f"  [US Scan {i+1}/{len(universe)}] {ticker}")
+    def _analyze_us(ticker):
         kline = deep_kline_analysis(ticker, market="US")
         if kline is None:
-            continue
+            return None
         fund = fetch_fundamentals(ticker)
         score, tags = _score_for_recommendation(kline, fund)
-        scored.append({
+        return {
             "code": ticker, "name": ticker, "market": "US",
             "kline": kline, "fund": fund,
             "score": score, "tags": tags,
-        })
-        time.sleep(0.3)
+        }
+
+    scored = []
+    with ThreadPoolExecutor(max_workers=10) as exe:
+        futs = {exe.submit(_analyze_us, t): t for t in universe}
+        done = 0
+        for f in as_completed(futs):
+            done += 1
+            if done % 20 == 0:
+                print(f"  [US Scan] {done}/{len(universe)} ...")
+            try:
+                res = f.result()
+                if res:
+                    scored.append(res)
+            except Exception:
+                pass
 
     scored.sort(key=lambda x: -x["score"])
     top_n = RECOMMENDATION["top_n_recommend_us"]
