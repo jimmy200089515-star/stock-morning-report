@@ -1,0 +1,40 @@
+name: 台股早報
+
+on:
+  schedule:
+    - cron: '0 0 * * 1-5'   # 每週一到五 08:00 台灣時間（UTC+8）
+  workflow_dispatch:          # 手動觸發（測試用）
+
+jobs:
+  morning-report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install yfinance pandas requests
+
+      - name: Write secrets
+        run: |
+          cat > secrets_local.py << 'PYEOF'
+          GMAIL_PASSWORD = "${{ secrets.GMAIL_PASSWORD }}"
+          TELEGRAM_BOT_TOKEN = "${{ secrets.TELEGRAM_BOT_TOKEN }}"
+          TELEGRAM_CHAT_ID = "${{ secrets.TELEGRAM_CHAT_ID }}"
+          PYEOF
+
+      - name: Collect data
+        run: python main.py --mode collect
+        timeout-minutes: 10
+
+      - name: Send report
+        run: python main.py --mode send
+        timeout-minutes: 3
