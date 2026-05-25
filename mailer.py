@@ -1045,11 +1045,13 @@ def build_html(taiex, us_indices,
          if paper_html else ''),
     ]
 
+    # 系統推薦 K 線卡：永遠顯示（不論 show_details）
+    parts.append(_build_recommendations_section(rec_tw or {}, rec_us or {}))
+
     if show_details:
         parts.extend([
             _build_signal_section(trade_signals or []),
             _build_holdings_section(holdings or {}),
-            _build_recommendations_section(rec_tw or {}, rec_us or {}),
         ])
 
     parts.extend([
