@@ -191,6 +191,7 @@ def send_mode() -> int:
         ai_market_summary=ai.get("ai_market_summary", ""),
         ai_verdicts_holdings=ai.get("ai_verdicts_holdings", []),
         ai_verdicts_recommend=ai.get("ai_verdicts_recommend", []),
+        show_details=True,
     )
     send_report(html)
     print("寄送完成 ✅")
