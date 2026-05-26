@@ -1,9 +1,7 @@
 name: 台股早報
 
 on:
-  schedule:
-    - cron: '0 0 * * 1-5'   # 每週一到五 08:00 台灣時間（UTC+8）
-  workflow_dispatch:          # 手動觸發（測試用）
+  workflow_dispatch:          # 只保留手動觸發（排程由 Claude Routine 負責）
 
 jobs:
   morning-report:

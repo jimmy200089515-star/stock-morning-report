@@ -640,14 +640,25 @@ def analyze_holdings(enable_vision: bool = True) -> dict:
 # 全市場掃描：台股
 # ===========================================================================
 def fetch_all_tw_listed() -> list:
-    """從 TWSE OpenAPI 一次抓所有上市股票今日行情。"""
+    """從 TWSE OpenAPI 一次抓所有上市股票今日行情（失敗自動 retry 3 次）。"""
     url = "https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL"
-    try:
-        resp = requests.get(url, headers=TWSE_HEADERS, timeout=30)
-        resp.raise_for_status()
-        rows = resp.json()
-    except Exception as e:
-        print(f"[fetch_all_tw_listed] 失敗：{e}")
+    for attempt in range(3):
+        try:
+            resp = requests.get(url, headers=TWSE_HEADERS, timeout=30)
+            resp.raise_for_status()
+            rows = resp.json()
+            if rows:
+                break
+            print(f"[fetch_all_tw_listed] 回傳空資料，等 10 秒後 retry {attempt+1}/3")
+            time.sleep(10)
+        except Exception as e:
+            print(f"[fetch_all_tw_listed] 失敗 {attempt+1}/3：{e}")
+            if attempt < 2:
+                time.sleep(10)
+            else:
+                return []
+    else:
+        print("[fetch_all_tw_listed] 三次都失敗，回傳空列表")
         return []
 
     result = []
